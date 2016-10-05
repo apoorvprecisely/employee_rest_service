@@ -4,4 +4,15 @@
 
 <web-app>
   <display-name>Archetype Created Web Application</display-name>
+
+  <servlet>
+    <servlet-name>RequestHandler</servlet-name>
+    <servlet-class>ApiHandler</servlet-class>
+  </servlet>
+
+  <servlet-mapping>
+    <servlet-name>RequestHandler</servlet-name>
+    <url-pattern>/employee/*</url-pattern>
+  </servlet-mapping>
+
 </web-app>
