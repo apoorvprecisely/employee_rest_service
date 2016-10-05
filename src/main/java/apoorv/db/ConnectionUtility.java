@@ -13,7 +13,7 @@ public class ConnectionUtility
         }
         else if ("plsql".equals(type))
         {
-            //return new PlsqlConnection();
+            return null;
         }
         else if ("mongo".equals(type))
         {
