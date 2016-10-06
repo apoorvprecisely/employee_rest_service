@@ -5,15 +5,11 @@ package apoorv.db;
  */
 public class ConnectionUtility
 {
-    public static ConnectionImpl getConnection(String type) throws Exception
+    public static Connection getConnection(String type) throws Exception
     {
         if ("mysql".equals(type))
         {
             return new MysqlConnection();
-        }
-        else if ("plsql".equals(type))
-        {
-            return null;
         }
         else if ("mongo".equals(type))
         {

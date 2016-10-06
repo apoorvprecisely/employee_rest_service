@@ -1,6 +1,7 @@
 
-import apoorv.db.ConnectionImpl;
+import apoorv.db.Connection;
 import apoorv.db.ConnectionUtility;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
@@ -45,6 +46,15 @@ public class ApiHandler extends HttpServlet
         catch (Exception e)
         {
             LOGGER.log(Level.SEVERE, "info", e);
+            PrintWriter out = response.getWriter();
+            try
+            {
+                out.println(new JSONObject().put("status", "500"));
+            }
+            catch (JSONException e1)
+            {
+                e1.printStackTrace();
+            }
         }
     }
 
@@ -92,10 +102,9 @@ public class ApiHandler extends HttpServlet
                     String salary = request.getParameter("salary");
                     String id = request.getParameter("id");
                     response.setContentType("text/html");
-                    ConnectionImpl connection = ConnectionUtility.getConnection(db);
+                    Connection connection = ConnectionUtility.getConnection(db);
                     connection.connect();
-                    // **format**   connection2.add("1 ,'Tyler Durden' ,2000000");
-                    String result = connection.add(id + " ,'" + name + "' ," + salary);
+                    String result = connection.add(id,name,salary);
                     connection.close();
                     out.println(result);
                 }
@@ -106,6 +115,15 @@ public class ApiHandler extends HttpServlet
         catch (Exception e)
         {
             LOGGER.log(Level.SEVERE, "info", e);
+            PrintWriter out = response.getWriter();
+            try
+            {
+                out.println(new JSONObject().put("status", "500"));
+            }
+            catch (JSONException e1)
+            {
+                e1.printStackTrace();
+            }
         }
     }
 
@@ -125,7 +143,7 @@ public class ApiHandler extends HttpServlet
                 salary = oldJson.getString("salary");
             }
         }
-        ConnectionImpl connection = ConnectionUtility.getConnection(db);
+        Connection connection = ConnectionUtility.getConnection(db);
         connection.connect();
         String result = connection.update(id, name, salary);
         connection.close();
@@ -134,7 +152,7 @@ public class ApiHandler extends HttpServlet
 
     private String deleteForId(String db, String id) throws Exception
     {
-        ConnectionImpl connection = null;
+        Connection connection = null;
         try
         {
             connection = ConnectionUtility.getConnection(db);
@@ -155,7 +173,7 @@ public class ApiHandler extends HttpServlet
 
     private String getEntryForId(String db, String id) throws Exception
     {
-        ConnectionImpl connection = null;
+        Connection connection = null;
         try
         {
             connection = ConnectionUtility.getConnection(db);

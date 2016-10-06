@@ -11,10 +11,10 @@ import java.util.logging.Logger;
 /**
  * Created by unbxd on 03/10/16.
  */
-public class MysqlConnection implements ConnectionImpl
+public class MysqlConnection implements Connection
 {
     private static Logger LOGGER = Logger.getLogger(MysqlConnection.class.getName());
-    private Connection connection;
+    private java.sql.Connection connection;
 
     @Override
     public void connect()
@@ -97,7 +97,7 @@ public class MysqlConnection implements ConnectionImpl
         catch (Exception e)
         {
             LOGGER.log(Level.SEVERE, "Error while searching employee", e);
-            return new JSONObject().put("status", "failed").toString();
+            return new JSONObject().put("status", "400").toString();
         }
         finally
         {
@@ -113,23 +113,22 @@ public class MysqlConnection implements ConnectionImpl
     }
 
     @Override
-    public String add(String query) throws SQLException, JSONException
+    public String add(String id, String name, String salary) throws SQLException, JSONException
     {
-        // **format**   connection2.add("1 ,'Tyler Durden' ,2000000");
         Statement statement = null;
         try
         {
             statement = connection.createStatement();
-            String sql = "INSERT INTO employee VALUES (" + query + ")";
+            String sql = "INSERT INTO employee VALUES (" + id + " ,'" + name + "' ," + salary + ")";
             LOGGER.log(Level.INFO, sql);
             statement.executeUpdate(sql);
             statement.close();
-            return new JSONObject().put("status", "success").toString();
+            return new JSONObject().put("status", "201").toString();
         }
         catch (Exception e)
         {
             LOGGER.log(Level.SEVERE, "Error while adding employee", e);
-            return new JSONObject().put("status", "failed").toString();
+            return new JSONObject().put("status", "400").toString();
         }
         finally
         {
@@ -151,13 +150,13 @@ public class MysqlConnection implements ConnectionImpl
             preparedStatement.setString(2, salary);
             preparedStatement.setInt(3, Integer.parseInt(id));
             preparedStatement.executeUpdate();
-            return new JSONObject().put("status", "success").toString();
+            return new JSONObject().put("status", "200").toString();
 
         }
         catch (Exception e)
         {
             LOGGER.log(Level.SEVERE, "Error while deleting employee", e);
-            return new JSONObject().put("status", "failed").toString();
+            return new JSONObject().put("status", "400").toString();
         }
         finally
         {
@@ -179,13 +178,13 @@ public class MysqlConnection implements ConnectionImpl
             int id = Integer.parseInt(query);
             preparedStatement.setInt(1, id);
             preparedStatement.execute();
-            return new JSONObject().put("status", "success").toString();
+            return new JSONObject().put("status", "204").toString();
 
         }
         catch (Exception e)
         {
             LOGGER.log(Level.SEVERE, "Error while deleting employee", e);
-            return new JSONObject().put("status", "failed").toString();
+            return new JSONObject().put("status", "400").toString();
         }
         finally
         {

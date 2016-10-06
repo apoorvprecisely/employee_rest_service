@@ -9,7 +9,7 @@ import org.json.JSONObject;
 /**
  * Created by unbxd on 04/10/16.
  */
-public class MongoConnection implements ConnectionImpl
+public class MongoConnection implements Connection
 {
     private MongoClient mongoClient;
 
@@ -71,20 +71,16 @@ public class MongoConnection implements ConnectionImpl
     }
 
     @Override
-    public String add(String inputString) throws JSONException
+    public String add(String id, String name, String salary) throws JSONException
     {
         DB db = mongoClient.getDB("apoorv");
         DBCollection coll = db.getCollection("employee");
         BasicDBObject data = new BasicDBObject();
-        String[] parts = inputString.split(" ,");
-        String id = parts[0];
-        String salary = parts[2];
-        String name = parts[1].substring(1, parts[1].length() - 1);
         data.append("id", id);
         data.append("name", name);
         data.append("salary", salary);
         coll.insert(data);
-        return new JSONObject().put("status", "success").toString();
+        return new JSONObject().put("status", "201").toString();
     }
 
     @Override
@@ -98,7 +94,7 @@ public class MongoConnection implements ConnectionImpl
         newDocument.put("name", name);
         BasicDBObject searchQuery = new BasicDBObject().append("id", id);
         coll.update(searchQuery, newDocument);
-        return new JSONObject().put("status", "success").toString();
+        return new JSONObject().put("status", "200").toString();
     }
 
     @Override
@@ -109,6 +105,6 @@ public class MongoConnection implements ConnectionImpl
         BasicDBObject document = new BasicDBObject();
         document.put("id", id);
         coll.remove(document);
-        return new JSONObject().put("status", "success").toString();
+        return new JSONObject().put("status", "204").toString();
     }
 }
