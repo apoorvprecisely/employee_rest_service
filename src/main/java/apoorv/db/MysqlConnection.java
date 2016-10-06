@@ -19,38 +19,18 @@ public class MysqlConnection implements Connection
     private java.sql.Connection connection;
 
     @Override
-    public void connect()
+    public void connect() throws ClassNotFoundException, SQLException
     {
-        try
-        {
-            Class.forName("com.mysql.jdbc.Driver");
-            connection = DriverManager.getConnection("jdbc:mysql://localhost/apoorv", "root", "root");
-        }
-        catch (SQLException e)
-        {
-            LOGGER.log(Level.SEVERE, "Connection failed, setting null", e);
-            connection = null;
-        }
-        catch (ClassNotFoundException e)
-        {
-            LOGGER.log(Level.SEVERE, "Connection failed, class not found", e);
-            connection = null;
-        }
+        Class.forName("com.mysql.jdbc.Driver");
+        connection = DriverManager.getConnection("jdbc:mysql://localhost/apoorv", "root", "root");
     }
 
     @Override
-    public void close()
+    public void close() throws SQLException
     {
-        try
+        if (connection != null)
         {
-            if (connection != null)
-            {
-                connection.close();
-            }
-        }
-        catch (Exception e)
-        {
-            LOGGER.log(Level.SEVERE, "Unable to close connection", e);
+            connection.close();
         }
     }
 
@@ -74,11 +54,6 @@ public class MysqlConnection implements Connection
                 bean.setSalary(salary + "");
             }
             return bean;
-
-        }
-        catch (Exception e)
-        {
-            LOGGER.log(Level.SEVERE, "Error while searching employee", e);
         }
         finally
         {
@@ -116,10 +91,6 @@ public class MysqlConnection implements Connection
                 employeeBeanList.add(bean);
             }
         }
-        catch (Exception e)
-        {
-            LOGGER.log(Level.SEVERE, "Error while searching employee", e);
-        }
         finally
         {
             if (rs != null)
@@ -146,10 +117,6 @@ public class MysqlConnection implements Connection
             statement.executeUpdate(sql);
             statement.close();
         }
-        catch (Exception e)
-        {
-            LOGGER.log(Level.SEVERE, "Error while adding employee", e);
-        }
         finally
         {
             if (statement != null)
@@ -172,10 +139,6 @@ public class MysqlConnection implements Connection
             preparedStatement.executeUpdate();
 
         }
-        catch (Exception e)
-        {
-            LOGGER.log(Level.SEVERE, "Error while deleting employee", e);
-        }
         finally
         {
             if (preparedStatement != null)
@@ -197,10 +160,6 @@ public class MysqlConnection implements Connection
             preparedStatement.setInt(1, id);
             preparedStatement.execute();
 
-        }
-        catch (Exception e)
-        {
-            LOGGER.log(Level.SEVERE, "Error while deleting employee", e);
         }
         finally
         {

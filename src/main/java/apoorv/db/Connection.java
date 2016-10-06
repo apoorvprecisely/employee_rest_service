@@ -10,9 +10,9 @@ import java.util.List;
 
 public interface Connection
 {
-    public void connect();
+    public void connect() throws ClassNotFoundException, SQLException;
 
-    public void close();
+    public void close() throws SQLException;
 
     public EmployeeBean getById(String id) throws JSONException, SQLException;
 

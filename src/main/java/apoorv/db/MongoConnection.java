@@ -60,7 +60,6 @@ public class MongoConnection implements Connection
         DB db = mongoClient.getDB("apoorv");
         DBCollection coll = db.getCollection("employee");
         DBCursor cursor = coll.find();
-        JSONArray resultArr = new JSONArray();
         while (cursor.hasNext())
         {
             DBObject rs = cursor.next();

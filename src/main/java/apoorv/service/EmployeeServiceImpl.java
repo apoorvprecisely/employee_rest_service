@@ -47,7 +47,10 @@ public class EmployeeServiceImpl implements EmployeeService
         }
         finally
         {
-            connection.close();
+            if (connection != null)
+            {
+                connection.close();
+            }
         }
     }
 
@@ -64,7 +67,10 @@ public class EmployeeServiceImpl implements EmployeeService
         }
         finally
         {
-            connection.close();
+            if (connection != null)
+            {
+                connection.close();
+            }
         }
     }
 
@@ -80,7 +86,10 @@ public class EmployeeServiceImpl implements EmployeeService
         }
         finally
         {
-            connection.close();
+            if (connection != null)
+            {
+                connection.close();
+            }
         }
 
     }
@@ -88,25 +97,35 @@ public class EmployeeServiceImpl implements EmployeeService
     @Override
     public void updateEmployee(String db, String id, EmployeeBean bean) throws JSONException, ClassNotFoundException, SQLException, InstantiationException, IllegalAccessException
     {
-        String name = bean.getName();
-        String salary = bean.getSalary();
-        if (name == "" || salary == "")
+        Connection connection = null;
+        try
         {
-            //need to fetch from db
-            EmployeeBean result = getEmployee(db, id);
-            JSONObject oldJson = new JSONObject(result);
-            if (name == null)
+            String name = bean.getName();
+            String salary = bean.getSalary();
+            if (name == "" || salary == "")
             {
-                name = oldJson.getString("name");
+                //need to fetch from db
+                EmployeeBean result = getEmployee(db, id);
+                JSONObject oldJson = new JSONObject(result);
+                if (name == null)
+                {
+                    name = oldJson.getString("name");
+                }
+                if (salary == null)
+                {
+                    salary = oldJson.getString("salary");
+                }
             }
-            if (salary == null)
+            connection = ConnectionUtility.getConnection(db);
+            connection.connect();
+            connection.update(new EmployeeBean(id, name, salary));
+        }
+        finally
+        {
+            if (connection != null)
             {
-                salary = oldJson.getString("salary");
+                connection.close();
             }
         }
-        Connection connection = ConnectionUtility.getConnection(db);
-        connection.connect();
-        connection.update(new EmployeeBean(id, name, salary));
-        connection.close();
     }
 }
