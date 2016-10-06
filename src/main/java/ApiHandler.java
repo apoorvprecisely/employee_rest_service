@@ -1,10 +1,14 @@
 
 import apoorv.db.Connection;
 import apoorv.db.ConnectionUtility;
+import apoorv.db.EmployeeBean;
+import apoorv.service.EmployeeServiceImpl;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.*;
@@ -31,15 +35,30 @@ public class ApiHandler extends HttpServlet
                 {
                     db = request.getParameter("db");
                 }
-                String id = "*";
+
                 String[] urlParts = url.split("/");
                 if (urlParts.length > 4)
                 {
-                    id = urlParts[4];
+                    String id = urlParts[4];
+                    response.setContentType("text/html");
+                    EmployeeBean result = new EmployeeServiceImpl().getEmployee(db, id);
+                    out.println(result.toJson().toString());
                 }
-                response.setContentType("text/html");
-                String result = getEntryForId(db, id);
-                out.println(result);
+                else
+                {
+                    response.setContentType("text/html");
+                    List<EmployeeBean> result = new EmployeeServiceImpl().getAllEmployee(db);
+                    JSONArray jsonArray = new JSONArray();
+                    for (EmployeeBean employeeBean : result)
+                    {
+                        JSONObject temp = new JSONObject();
+                        temp.put("id", employeeBean.getId());
+                        temp.put("name", employeeBean.getName());
+                        temp.put("salary", employeeBean.getSalary());
+                        jsonArray.put(temp);
+                    }
+                    out.println(jsonArray.toString());
+                }
             }
 
         }
@@ -79,16 +98,20 @@ public class ApiHandler extends HttpServlet
                     if ("delete".equals(action))
                     {
                         response.setContentType("text/html");
-                        String result = deleteForId(db, id);
-                        out.println(result);
+                        new EmployeeServiceImpl().deleteEmployee(db, id);
+                        out.println(new JSONObject().put("status", "204"));
                     }
                     else if ("update".equals(action))
                     {
                         response.setContentType("text/html");
-                        String name = request.getParameter("name");
-                        String salary = request.getParameter("salary");
-                        String result = updateForId(db, id, name, salary);
-                        out.println(result);
+                        String name = "";
+                        String salary = "";
+                        if (name != null)
+                            name = request.getParameter("name");
+                        if (salary != null)
+                            salary = request.getParameter("salary");
+                        new EmployeeServiceImpl().updateEmployee(db, id, new EmployeeBean(id, name, salary));
+                        out.println(new JSONObject().put("status", "200"));
                     }
                     else
                     {
@@ -102,11 +125,8 @@ public class ApiHandler extends HttpServlet
                     String salary = request.getParameter("salary");
                     String id = request.getParameter("id");
                     response.setContentType("text/html");
-                    Connection connection = ConnectionUtility.getConnection(db);
-                    connection.connect();
-                    String result = connection.add(id,name,salary);
-                    connection.close();
-                    out.println(result);
+                    new EmployeeServiceImpl().addEmployee(db, new EmployeeBean(id, name, salary));
+                    out.println(new JSONObject().put("status", "201"));
                 }
 
             }
@@ -124,71 +144,6 @@ public class ApiHandler extends HttpServlet
             {
                 e1.printStackTrace();
             }
-        }
-    }
-
-    private String updateForId(String db, String id, String name, String salary) throws Exception
-    {
-        if (name == null || salary == null)
-        {
-            //need to fetch from db
-            String result = getEntryForId(db, id);
-            JSONObject oldJson = new JSONObject(result);
-            if (name == null)
-            {
-                name = oldJson.getString("name");
-            }
-            if (salary == null)
-            {
-                salary = oldJson.getString("salary");
-            }
-        }
-        Connection connection = ConnectionUtility.getConnection(db);
-        connection.connect();
-        String result = connection.update(id, name, salary);
-        connection.close();
-        return result;
-    }
-
-    private String deleteForId(String db, String id) throws Exception
-    {
-        Connection connection = null;
-        try
-        {
-            connection = ConnectionUtility.getConnection(db);
-            connection.connect();
-            String result = connection.delete(id);
-            return result;
-        }
-        catch (Exception e)
-        {
-            LOGGER.log(Level.SEVERE, "Error Details", e);
-            return new JSONObject().put("status", "connection_error").toString();
-        }
-        finally
-        {
-            connection.close();
-        }
-    }
-
-    private String getEntryForId(String db, String id) throws Exception
-    {
-        Connection connection = null;
-        try
-        {
-            connection = ConnectionUtility.getConnection(db);
-            connection.connect();
-            String result = connection.execute(id);
-            return result;
-        }
-        catch (Exception e)
-        {
-            LOGGER.log(Level.SEVERE, "Error Details", e);
-            return new JSONObject().put("status", "connection_error").toString();
-        }
-        finally
-        {
-            connection.close();
         }
     }
 

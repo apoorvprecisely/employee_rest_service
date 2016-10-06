@@ -5,6 +5,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -53,51 +55,70 @@ public class MysqlConnection implements Connection
     }
 
     @Override
-    public String execute(String query) throws SQLException, JSONException
+    public EmployeeBean getById(String query) throws SQLException, JSONException
     {
+        EmployeeBean bean = new EmployeeBean();
         Statement statement = null;
         ResultSet rs = null;
         try
         {
             statement = connection.createStatement();
-            //TODO: change
-            if ("*".equals(query))
+            rs = statement.executeQuery("select * from employee where id=" + query);
+            while (rs.next())
             {
-                rs = statement.executeQuery("select * from employee");
-                JSONArray resultArr = new JSONArray();
-                while (rs.next())
-                {
-                    JSONObject result = new JSONObject();
-                    int id = rs.getInt("id");
-                    String name = rs.getString("name");
-                    int salary = rs.getInt("salary");
-                    result.put("id", id);
-                    result.put("name", name);
-                    result.put("salary", salary + "");
-                    resultArr.put(result);
-                }
-                return resultArr.toString();
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                int salary = rs.getInt("salary");
+                bean.setId(id + "");
+                bean.setName(name);
+                bean.setSalary(salary + "");
             }
-            else
+            return bean;
+
+        }
+        catch (Exception e)
+        {
+            LOGGER.log(Level.SEVERE, "Error while searching employee", e);
+        }
+        finally
+        {
+            if (rs != null)
             {
-                rs = statement.executeQuery("select * from employee where id=" + query);
-                JSONObject result = new JSONObject();
-                while (rs.next())
-                {
-                    int id = rs.getInt("id");
-                    String name = rs.getString("name");
-                    int salary = rs.getInt("salary");
-                    result.put("id", id);
-                    result.put("name", name);
-                    result.put("salary", salary + "");
-                }
-                return result.toString();
+                rs.close();
+            }
+            if (statement != null)
+            {
+                statement.close();
+            }
+            return bean;
+        }
+    }
+
+    @Override
+    public List<EmployeeBean> getAll() throws JSONException, SQLException
+    {
+        List<EmployeeBean> employeeBeanList = new ArrayList<EmployeeBean>();
+        Statement statement = null;
+        ResultSet rs = null;
+        try
+        {
+            statement = connection.createStatement();
+            rs = statement.executeQuery("select * from employee");
+            while (rs.next())
+            {
+                EmployeeBean bean = new EmployeeBean();
+                int id = rs.getInt("id");
+                String name = rs.getString("name");
+                int salary = rs.getInt("salary");
+                bean.setId(id + "");
+                bean.setName(name);
+                bean.setSalary(salary + "");
+                employeeBeanList.add(bean);
             }
         }
         catch (Exception e)
         {
             LOGGER.log(Level.SEVERE, "Error while searching employee", e);
-            return new JSONObject().put("status", "400").toString();
         }
         finally
         {
@@ -110,25 +131,24 @@ public class MysqlConnection implements Connection
                 statement.close();
             }
         }
+        return employeeBeanList;
     }
 
     @Override
-    public String add(String id, String name, String salary) throws SQLException, JSONException
+    public void add(EmployeeBean bean) throws SQLException, JSONException
     {
         Statement statement = null;
         try
         {
             statement = connection.createStatement();
-            String sql = "INSERT INTO employee VALUES (" + id + " ,'" + name + "' ," + salary + ")";
+            String sql = "INSERT INTO employee VALUES (" + bean.getId() + " ,'" + bean.getName() + "' ," + bean.getSalary() + ")";
             LOGGER.log(Level.INFO, sql);
             statement.executeUpdate(sql);
             statement.close();
-            return new JSONObject().put("status", "201").toString();
         }
         catch (Exception e)
         {
             LOGGER.log(Level.SEVERE, "Error while adding employee", e);
-            return new JSONObject().put("status", "400").toString();
         }
         finally
         {
@@ -140,23 +160,21 @@ public class MysqlConnection implements Connection
     }
 
     @Override
-    public String update(String id, String name, String salary) throws SQLException, JSONException
+    public void update(EmployeeBean bean) throws SQLException, JSONException
     {
         String query = "update employee set name = ? , salary = ? where id = ?";
         PreparedStatement preparedStatement = connection.prepareStatement(query);
         try
         {
-            preparedStatement.setString(1, name);
-            preparedStatement.setString(2, salary);
-            preparedStatement.setInt(3, Integer.parseInt(id));
+            preparedStatement.setString(1, bean.getName());
+            preparedStatement.setString(2, bean.getSalary());
+            preparedStatement.setInt(3, Integer.parseInt(bean.getId()));
             preparedStatement.executeUpdate();
-            return new JSONObject().put("status", "200").toString();
 
         }
         catch (Exception e)
         {
             LOGGER.log(Level.SEVERE, "Error while deleting employee", e);
-            return new JSONObject().put("status", "400").toString();
         }
         finally
         {
@@ -168,7 +186,7 @@ public class MysqlConnection implements Connection
     }
 
     @Override
-    public String delete(String query) throws JSONException, SQLException
+    public void delete(String query) throws JSONException, SQLException
     {
         PreparedStatement preparedStatement = null;
         try
@@ -178,13 +196,11 @@ public class MysqlConnection implements Connection
             int id = Integer.parseInt(query);
             preparedStatement.setInt(1, id);
             preparedStatement.execute();
-            return new JSONObject().put("status", "204").toString();
 
         }
         catch (Exception e)
         {
             LOGGER.log(Level.SEVERE, "Error while deleting employee", e);
-            return new JSONObject().put("status", "400").toString();
         }
         finally
         {
