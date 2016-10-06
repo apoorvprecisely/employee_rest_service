@@ -26,7 +26,7 @@ public class ApiHandler extends HttpServlet
             if (request instanceof HttpServletRequest)
             {
                 String url = ((HttpServletRequest) request).getRequestURL().toString();
-                String db = "mysql";
+                String db = "MysqlConnection";
                 if (request.getParameter("db") != null)
                 {
                     db = request.getParameter("db");

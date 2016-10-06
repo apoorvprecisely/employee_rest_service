@@ -1,23 +1,28 @@
 package apoorv.db;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * Created by unbxd on 03/10/16.
  */
 public class ConnectionUtility
 {
-    public static Connection getConnection(String type) throws Exception
+    private static Logger LOGGER = Logger.getLogger(ConnectionUtility.class.getName());
+
+    public static Connection getConnection(String type) throws IllegalAccessException, InstantiationException, ClassNotFoundException
     {
-        if ("mysql".equals(type))
+        Class c = null;
+        try
         {
-            return new MysqlConnection();
+            c = Class.forName("apoorv.db." + type);
         }
-        else if ("mongo".equals(type))
+        catch (ClassNotFoundException e)
         {
-            return new MongoConnection();
+            LOGGER.log(Level.SEVERE, "Class not defined " + type + ",Returning MysqlConnection", e);
+            c = Class.forName("apoorv.db.MysqlConnection");
         }
-        else
-        {
-            throw new Exception("Unknown DB Type" + type);
-        }
+        Connection connection = (Connection) c.newInstance();
+        return connection;
     }
 }
