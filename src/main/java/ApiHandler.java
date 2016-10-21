@@ -1,9 +1,12 @@
 
-import apoorv.db.ConnectionImpl;
-import apoorv.db.ConnectionUtility;
+import apoorv.db.EmployeeBean;
+import apoorv.service.EmployeeServiceImpl;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.*;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.servlet.*;
@@ -22,29 +25,66 @@ public class ApiHandler extends HttpServlet
         try
         {
             PrintWriter out = response.getWriter();
+            String id = null;
             if (request instanceof HttpServletRequest)
             {
-                String url = ((HttpServletRequest) request).getRequestURL().toString();
-                String db = "mysql";
+                String db = "MysqlConnection";
                 if (request.getParameter("db") != null)
                 {
                     db = request.getParameter("db");
                 }
-                String id = "*";
-                String[] urlParts = url.split("/");
-                if (urlParts.length > 4)
+                if (request.getParameter("id") != null)
                 {
-                    id = urlParts[4];
+                    id = request.getParameter("id");
                 }
-                response.setContentType("text/html");
-                String result = getEntryForId(db, id);
-                out.println(result);
+                if (id != null)
+                {
+                    response.setContentType("text/html");
+                    EmployeeBean result = new EmployeeServiceImpl().getEmployee(db, id);
+                    if ("".equals(result.getId()))
+                    {
+                        out.println(new JSONObject().put("status", "404").toString());
+                    }
+                    else
+                    {
+                        out.println(result.toJson().toString());
+                    }
+                }
+                else
+                {
+                    response.setContentType("text/html");
+                    List<EmployeeBean> result = new EmployeeServiceImpl().getAllEmployee(db);
+                    StringBuilder sb = new StringBuilder();
+                    ObjectMapper mapper = new ObjectMapper();
+                    if (result.size() > 0)
+                    {
+                        for (EmployeeBean employeeBean : result)
+                        {
+                            String json = mapper.writeValueAsString(employeeBean);
+                            sb.append(json + " ");
+                        }
+                        out.println(sb.toString());
+                    }
+                    else
+                    {
+                        out.println(new JSONObject().put("status", "404").toString());
+                    }
+                }
             }
 
         }
         catch (Exception e)
         {
             LOGGER.log(Level.SEVERE, "info", e);
+            PrintWriter out = response.getWriter();
+            try
+            {
+                out.println(new JSONObject().put("status", "500"));
+            }
+            catch (JSONException e1)
+            {
+                LOGGER.log(Level.SEVERE, "Exception thrown", e);
+            }
         }
     }
 
@@ -53,52 +93,23 @@ public class ApiHandler extends HttpServlet
         try
         {
             PrintWriter out = response.getWriter();
+            String id = null;
             if (request instanceof HttpServletRequest)
             {
-                String url = ((HttpServletRequest) request).getRequestURL().toString();
-                String db = "mysql";
+                String db = "MysqlConnection";
                 if (request.getParameter("db") != null)
                 {
                     db = request.getParameter("db");
                 }
-                String[] urlParts = url.split("/");
-                if (urlParts.length > 4)
+                if (request.getParameter("id") != null)
                 {
-                    String id = urlParts[4];
-                    String action = request.getParameter("action");
-                    if ("delete".equals(action))
-                    {
-                        response.setContentType("text/html");
-                        String result = deleteForId(db, id);
-                        out.println(result);
-                    }
-                    else if ("update".equals(action))
-                    {
-                        response.setContentType("text/html");
-                        String name = request.getParameter("name");
-                        String salary = request.getParameter("salary");
-                        String result = updateForId(db, id, name, salary);
-                        out.println(result);
-                    }
-                    else
-                    {
-                        out.println(new JSONObject().put("error", "unknown action" + action));
-                    }
+                    id = request.getParameter("id");
                 }
-                else
-                {
-                    // add new entry
-                    String name = request.getParameter("name");
-                    String salary = request.getParameter("salary");
-                    String id = request.getParameter("id");
-                    response.setContentType("text/html");
-                    ConnectionImpl connection = ConnectionUtility.getConnection(db);
-                    connection.connect();
-                    // **format**   connection2.add("1 ,'Tyler Durden' ,2000000");
-                    String result = connection.add(id + " ,'" + name + "' ," + salary);
-                    connection.close();
-                    out.println(result);
-                }
+                String name = request.getParameter("name");
+                String salary = request.getParameter("salary");
+                response.setContentType("text/html");
+                new EmployeeServiceImpl().addEmployee(db, new EmployeeBean(id, name, salary));
+                out.println(new JSONObject().put("status", "201"));
 
             }
 
@@ -106,71 +117,89 @@ public class ApiHandler extends HttpServlet
         catch (Exception e)
         {
             LOGGER.log(Level.SEVERE, "info", e);
+            PrintWriter out = response.getWriter();
+            try
+            {
+                out.println(new JSONObject().put("status", "500"));
+            }
+            catch (JSONException e1)
+            {
+                LOGGER.log(Level.SEVERE, "Exception thrown", e);
+            }
         }
     }
 
-    private String updateForId(String db, String id, String name, String salary) throws Exception
+    public void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
-        if (name == null || salary == null)
-        {
-            //need to fetch from db
-            String result = getEntryForId(db, id);
-            JSONObject oldJson = new JSONObject(result);
-            if (name == null)
-            {
-                name = oldJson.getString("name");
-            }
-            if (salary == null)
-            {
-                salary = oldJson.getString("salary");
-            }
-        }
-        ConnectionImpl connection = ConnectionUtility.getConnection(db);
-        connection.connect();
-        String result = connection.update(id, name, salary);
-        connection.close();
-        return result;
-    }
-
-    private String deleteForId(String db, String id) throws Exception
-    {
-        ConnectionImpl connection = null;
         try
         {
-            connection = ConnectionUtility.getConnection(db);
-            connection.connect();
-            String result = connection.delete(id);
-            return result;
+            String db = "MysqlConnection";
+            String id = null;
+            if (request.getParameter("db") != null)
+            {
+                db = request.getParameter("db");
+            }
+            if (request.getParameter("id") != null)
+            {
+                id = request.getParameter("id");
+            }
+            PrintWriter out = response.getWriter();
+            response.setContentType("text/html");
+            String name = "";
+            String salary = "";
+            if (name != null)
+                name = request.getParameter("name");
+            if (salary != null)
+                salary = request.getParameter("salary");
+            new EmployeeServiceImpl().updateEmployee(db, id, new EmployeeBean(id, name, salary));
+            out.println(new JSONObject().put("status", "200"));
         }
         catch (Exception e)
         {
-            LOGGER.log(Level.SEVERE, "Error Details", e);
-            return new JSONObject().put("status", "connection_error").toString();
-        }
-        finally
-        {
-            connection.close();
+            LOGGER.log(Level.SEVERE, "info", e);
+            PrintWriter out = response.getWriter();
+            try
+            {
+                out.println(new JSONObject().put("status", "500"));
+            }
+            catch (JSONException e1)
+            {
+                LOGGER.log(Level.SEVERE, "Exception thrown", e);
+            }
         }
     }
 
-    private String getEntryForId(String db, String id) throws Exception
+    public void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException
     {
-        ConnectionImpl connection = null;
         try
         {
-            connection = ConnectionUtility.getConnection(db);
-            connection.connect();
-            String result = connection.execute(id);
-            return result;
+            String db = "MysqlConnection";
+            String id = null;
+            if (request.getParameter("db") != null)
+            {
+                db = request.getParameter("db");
+            }
+            if (request.getParameter("id") != null)
+            {
+                id = request.getParameter("id");
+            }
+            PrintWriter out = response.getWriter();
+            response.setContentType("text/html");
+            new EmployeeServiceImpl().deleteEmployee(db, id);
+            out.println(new JSONObject().put("status", "204"));
         }
         catch (Exception e)
         {
-            LOGGER.log(Level.SEVERE, "Error Details", e);
-            return new JSONObject().put("status", "connection_error").toString();
-        }
-        finally
-        {
-            connection.close();
+            LOGGER.log(Level.SEVERE, "info", e);
+            PrintWriter out = response.getWriter();
+            try
+            {
+                out.println(new JSONObject().put("status", "500"));
+            }
+            catch (JSONException e1)
+            {
+                LOGGER.log(Level.SEVERE, "Exception thrown", e);
+            }
         }
     }
 
